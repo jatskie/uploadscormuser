@@ -45,7 +45,7 @@ $string['uploadscormuser_help'] = 'Users may be uploaded (and optionally enrolle
 * The first record contains a list of fieldnames defining the format of the rest of the file
 * Required fieldnames are username, password, firstname, lastname, email';
 $string['uploadscormuserspreview'] = 'Upload users preview';
-$string['uploadscormuserresult'] = 'Upload users results';
+$string['uploadscormusersresult'] = 'Upload users results';
 $string['uploaduser:uploaduserpictures'] = 'Upload user pictures';
 $string['useraccountupdated'] = 'User updated';
 $string['useraccountuptodate'] = 'User up-to-date';

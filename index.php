@@ -85,7 +85,7 @@ $bulknurl  = new moodle_url('/admin/user/user_bulk.php');
 
 $today = time();
 $today = make_timestamp(date('Y', $today), date('m', $today), date('d', $today), 0, 0, 0);
-
+$content = array();
 // array of all valid fields for validation
 $STD_FIELDS = array(
 		'id',
@@ -149,11 +149,12 @@ if (empty($iid))
         $cir = new csv_import_reader($iid, 'uploadscormuser');
 
         $content = $mform1->get_file_content('userfile');
+        //echo '<pre>' . print_r($content, true) .'</pre>';
         
         // Make a moodle readable csv
         $content = us_convert_scorm_data_to_moodle($content, $formdata->encoding, $formdata->delimiter_name);
-        
-        $readcount = $cir->load_csv_content($content, $formdata->encoding, $formdata->delimiter_name);
+        $manualcache['scormdata'] = $content['scormdata'];
+        $readcount = $cir->load_csv_content($content['csvfile'], $formdata->encoding, $formdata->delimiter_name);
         
         $csvloaderror = $cir->get_error();
         //unset($content);
@@ -318,30 +319,8 @@ else if ($formdata = $mform2->get_data())
         {
             // user creation is a special case - the username may be constructed from templates using firstname and lastname
             // better never try this in mixed update types
-            $error = false;
-            if (!isset($user->firstname) or $user->firstname === '') 
-            {
-                $upt->track('status', get_string('missingfield', 'error', 'firstname'), 'error');
-                $upt->track('firstname', $errorstr, 'error');
-                $error = true;
-            }
-            if (!isset($user->lastname) or $user->lastname === '') 
-            {
-                $upt->track('status', get_string('missingfield', 'error', 'lastname'), 'error');
-                $upt->track('lastname', $errorstr, 'error');
-                $error = true;
-            }
-            if ($error) 
-            {
-                $userserrors++;
-                continue;
-            }
-            // we require username too - we might use template for it though
-            if (empty($user->username) and !empty($formdata->username)) 
-            {
-                $user->username = us_process_template($formdata->username, $user);
-                $upt->track('username', s($user->username));
-            }
+            $error = false;            
+            
         }
 
         // normalize username
@@ -1078,7 +1057,10 @@ else if ($formdata = $mform2->get_data())
                     }
 
                     $manual->enrol_user($manualcache[$courseid], $user->id, $rid, $today, $timeend, $status);
-
+                    echo '<pre>' . print_r($manualcache) . '</pre>';
+                    die();
+                    //us_process_scorm_data($content['scormdata']);
+					
                     $a = new stdClass();
                     $a->course = $shortname;
                     $a->role   = $rolecache[$rid]->name;

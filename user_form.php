@@ -417,15 +417,8 @@ class admin_uploadscormuser_form2 extends moodleform
         // look for other required data
         if ($optype != US_USER_UPDATE) 
         {
-            $requiredusernames = useredit_get_required_name_fields();
             $missing = array();
-            foreach ($requiredusernames as $requiredusername) 
-            {
-                if (!in_array($requiredusername, $columns)) 
-                {
-                    $missing[] = get_string('missingfield', 'error', $requiredusername);;
-                }
-            }
+
             if ($missing) 
             {
                 $errors['ustype'] = implode('<br />',  $missing);

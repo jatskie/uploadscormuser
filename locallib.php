@@ -46,13 +46,11 @@ define('US_PWRESET_ALL', 2);
 
 define('DEFAULT_PASSWORD', 'Password-1');
 
-define('MDL_FLD_FIRSTNAME', 0);
-define('MDL_FLD_LASTNAME', 1);
-define('MDL_FLD_USERNAME', 2);
-define('MDL_FLD_EMAIL', 3);
-define('MDL_FLD_PASSWORD', 4);
-define('MDL_FLD_IDNUMBER', 5);
-define('MDL_FLD_COURSE1', 6);
+define('MDL_FLD_USERNAME', 0);
+define('MDL_FLD_EMAIL', 1);
+define('MDL_FLD_PASSWORD', 2);
+define('MDL_FLD_IDNUMBER', 3);
+define('MDL_FLD_COURSE1', 4);
 
 /**
  * Tracking of processed users.
@@ -67,7 +65,7 @@ define('MDL_FLD_COURSE1', 6);
 class us_progress_tracker 
 {
     private $_row;
-    public $columns = array('status', 'line', 'id', 'username', 'firstname', 'lastname', 'email', 'password', 'auth', 'enrolments', 'suspended', 'deleted');
+    public $columns = array('status', 'line', 'id', 'username', 'email', 'password', 'auth', 'enrolments', 'suspended', 'deleted');
 
     /**
      * Print table header.
@@ -82,8 +80,6 @@ class us_progress_tracker
         echo '<th class="header c'.$ci++.'" scope="col">'.get_string('uscsvline', 'tool_uploadscormuser').'</th>';
         echo '<th class="header c'.$ci++.'" scope="col">ID</th>';
         echo '<th class="header c'.$ci++.'" scope="col">'.get_string('username').'</th>';
-        echo '<th class="header c'.$ci++.'" scope="col">'.get_string('firstname').'</th>';
-        echo '<th class="header c'.$ci++.'" scope="col">'.get_string('lastname').'</th>';
         echo '<th class="header c'.$ci++.'" scope="col">'.get_string('email').'</th>';
         echo '<th class="header c'.$ci++.'" scope="col">'.get_string('password').'</th>';
         echo '<th class="header c'.$ci++.'" scope="col">'.get_string('authentication').'</th>';
@@ -215,10 +211,13 @@ function us_validate_user_upload_columns(csv_import_reader $cir, $stdfields, $pr
 
     // test columns
     $processed = array();
+//    echo '<pre>' . print_r($columns, true) .'</pre>';
+//    die();
     foreach ($columns as $key => $unused) 
     {
         $field = $columns[$key];
         $lcfield = core_text::strtolower($field);
+        //echo '<pre>' . print_r($field, true) .'</pre>';
         
         if (in_array($field, $stdfields) or in_array($lcfield, $stdfields)) 
         {
@@ -315,8 +314,8 @@ function us_process_template($template, $user)
     }
 
     $username  = isset($user->username)  ? $user->username  : '';
-    $firstname = isset($user->firstname) ? $user->firstname : '';
-    $lastname  = isset($user->lastname)  ? $user->lastname  : '';
+    $firstname = '';
+    $lastname  = '';
 
     $callback = partial('us_process_template_callback', $username, $firstname, $lastname);
 
@@ -547,6 +546,7 @@ function us_convert_scorm_data_to_moodle(&$content, $encoding = 'utf-8', $delimi
     fseek($fp, 0);
     // Create an array to store the imported data for error checking.
     $columns = array();
+    $scormdata = array();
     // str_getcsv doesn't iterate through the csv data properly. It has
     // problems with line returns.
     while ($fgetdata = fgetcsv($fp, 0, $csv_delimiter, $enclosure)) 
@@ -562,9 +562,7 @@ function us_convert_scorm_data_to_moodle(&$content, $encoding = 'utf-8', $delimi
     	} 
     	else 
     	{
-    		$columns[] = array(
-    				$fgetdata[4],	// firstname
-    				$fgetdata[5], 	// lastname
+    		$columns[] = array(    				
     				$fgetdata[3], 	// username
     				$fgetdata[3], 	// email
     				$fgetdata[3], 	// password
@@ -572,14 +570,19 @@ function us_convert_scorm_data_to_moodle(&$content, $encoding = 'utf-8', $delimi
     				$fgetdata[0], 	// avtivity name
     				/*
     				7 => array( // course data
-    						$fgetdata[20],	// attempt date
-    						$fgetdata[21],	// score
-    						$fgetdata[22],	// status
-    						$fgetdata[23],	// slides viewed
-    						$fgetdata[25],	// duration
+    						
     				)
-    				*/
-    				
+    				*/    				
+    		);
+    		
+    		$scormdata[] = array(
+    			$fgetdata[3], 	// username
+    			$fgetdata[0], 	// avtivity name
+    			$fgetdata[20],	// attempt date
+    			$fgetdata[21],	// score
+    			$fgetdata[22],	// status
+    			$fgetdata[23],	// slides viewed
+    			$fgetdata[25],	// duration
     		);
     	}
     }
@@ -592,12 +595,6 @@ function us_convert_scorm_data_to_moodle(&$content, $encoding = 'utf-8', $delimi
     {
     	switch ($intCtr)
     	{
-    		case MDL_FLD_FIRSTNAME:
-    			$columns[0][$intCtr] = 'firstname';
-    			break;
-    		case MDL_FLD_LASTNAME:
-    			$columns[0][$intCtr] = 'lastname';
-    			break;
     		case MDL_FLD_USERNAME:
     			$columns[0][$intCtr] = 'username';
     			break;
@@ -646,19 +643,31 @@ function us_convert_scorm_data_to_moodle(&$content, $encoding = 'utf-8', $delimi
    }
    
    // reconstruct the csv
-   $strCsvFile = '';
+   $strCsvFile = "";
+  
    foreach ($columns as $arrData)
    {
-   		$strCsvFile .= '"' . $arrData[MDL_FLD_FIRSTNAME] . '","' . 
-   							 $arrData[MDL_FLD_LASTNAME] . '","' . 
-   		                     $arrData[MDL_FLD_USERNAME] . '","' . 
-   		                     $arrData[MDL_FLD_EMAIL] . '","' . 
-   		                     $arrData[MDL_FLD_PASSWORD] . '","' . 
-   		                     $arrData[MDL_FLD_IDNUMBER] . '","' . 
-   		                     $arrData[MDL_FLD_COURSE1] . '" \\r\\n';
+   		$strCsvFile .= $arrData[MDL_FLD_USERNAME]  . "," . 
+   		               $arrData[MDL_FLD_EMAIL]     . "," . 
+   		               $arrData[MDL_FLD_PASSWORD]  . "," .
+   		               $arrData[MDL_FLD_IDNUMBER]  . "," . 
+   		               $arrData[MDL_FLD_COURSE1]   . "\r\n";
    }
    
    // cleanup
+   fclose($fp);
    unlink($tempfile);
-   return $strCsvFile;
+   
+   $arrReturnValue = array('csvfile' => $strCsvFile, 'scormdata' => $scormdata);
+   return $arrReturnValue;
+}
+
+function us_process_scorm_data($aArrAgs)
+{
+	/**
+	 * TODO: add the scorm data to mdl_scorm_track
+	 */
+	
+	echo '<pre>' . print_r($aArrAgs) . '</pre>';
+	die();
 }
