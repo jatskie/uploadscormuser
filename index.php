@@ -1057,8 +1057,7 @@ else if ($formdata = $mform2->get_data())
                     }
 
                     $manual->enrol_user($manualcache[$courseid], $user->id, $rid, $today, $timeend, $status);
-                    echo '<pre>' . print_r($manualcache) . '</pre>';
-                    die();
+
                     //us_process_scorm_data($content['scormdata']);
 					
                     $a = new stdClass();
